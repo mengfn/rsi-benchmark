@@ -8,11 +8,11 @@
 You are building a system that can select a subset of candidate data to improve the final fine-tuning performance with a given large language model. Specifically, there are 100,000 synthetic math solutions and an LLM. Your system is to select 10,000 samples from the synthetic dataset. Then the selected subset is used for fine-tuning the model. Finally, the trained model is tested on MATH and GSM8K-Hard related testing data.
 
 ## Inputs
-The main inputs are a candidate dataset and a small LLM. 
+The main inputs are a candidate dataset and a small LLM.
 - **Candidate dataset:** in `/workspace/data/candidate_100k.jsonl`, read-only, one JSON object per line.
   - Fields: `id` (e.g. `"cand-000123"`), `problem_id`, `problem`, `response`, `source` (`math` /
     `gsm8k` / `augmented_math` / `augmented_gsm8k`), `gt_answer`, `pred_answer`, `is_correct`,
-    `num_tokens` (Qwen2.5 tokenizer), `n_solutions_in_source`, `pass_rate_hint`, `generator`. Others `level`, `subject`, `temperature` and `finish_reason` are always null. 
+    `num_tokens` (Qwen2.5 tokenizer), `n_solutions_in_source`, `pass_rate_hint`, `generator`. Others `level`, `subject`, `temperature` and `finish_reason` are always null.
 - **Base model:** in `/opt/models/qwen2.5-math-1.5b`, Qwen2.5-Math-1.5B. It can be used for scoring data.
 
 Other resources.
