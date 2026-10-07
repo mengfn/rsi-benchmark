@@ -1,5 +1,5 @@
 # SHA-256 of the protected entrypoints; paths are relative to the task root.
 f4dea3a97eb00a5375b0b3235e94390dbcb70ca220b94b24a00e773224137856  environment/baseline/baseline.sh
-9ad8a6d01220249de2ff8cb48369c6a57ff46784a8cfac784d2a4994e09ba222  environment/baseline/baseline_val_reward.json
+b6861e6539a7951d644ff67b17db2c63352faf50751e415ab0ce0bc898933540  environment/baseline/baseline_val_reward.json
 b79012af78b0f99a0bac323933d61b3b3fb61e05e5566dd133206020c10fe39d  environment/validation/val.sh
 b51b2a6bbba54e9d7a6fc3bdfbbeee08843c1c7e6cb59e540b008b1369333ffa  tests/test.sh

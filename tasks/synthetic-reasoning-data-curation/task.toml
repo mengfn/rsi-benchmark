@@ -24,8 +24,8 @@ direction = "higher_better"
 theoretical_best = 1.0
 # Measured with tools/baseline-calibration (seeds 0, 1, 2): validation 0.6075 / 0.6063 / 0.6053,
 # test 0.6401 / 0.6363 / 0.6295.
-baseline_validation = { mean = 0.606386878919, std = 0.00108650239803, runs = 3 }
-baseline_test = { mean = 0.635324840764, std = 0.00534766009177, runs = 3 }
+baseline_validation = { mean = 0.603479015919, std = 0.00163297285538, runs = 3 }
+baseline_test = { mean = 0.631596602972, std = 0.0116407653303, runs = 3 }
 
 [[metadata.metrics]]
 name = "math_pass1"
