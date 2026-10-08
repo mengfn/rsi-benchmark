@@ -93,17 +93,25 @@ def gsm8k_gold(answer_field: str) -> str:
 # Normalisation & grading
 # ---------------------------------------------------------------------------
 _TEXT_CMD = re.compile(r"\\(?:text|textbf|mathrm|mbox|operatorname)\{([^{}]*)\}")
+# Units are stripped only right after a number ("5 cm", "16 cm^2", "10 square units", "5\text{ m}"), never
+# from variables or LaTeX commands such as "2m+1", "(m,n)", "m^2-4" or "\pm 3". Single-letter units (m, g)
+# need a space or a \text{} wrapper, since "2m" is far more often 2*m than 2 metres.
+_MULTI_UNITS = (r"dollars?|cents?|units?|degrees?|cm|km|inches|inch|feet|foot|ft|hours?|minutes?|"
+                r"seconds?|days?|weeks?|years?|meters?|miles?|pounds?|lbs?|kg|square|sq")
+_SINGLE_UNITS = r"m|g"
+_EXP = r"(?:\s*\^\s*\{?\d+\}?)?"
+_TEXT_UNITS = re.compile(
+    rf"(?<=\d)\s*\\(?:text|textbf|mathrm|mbox)\{{\s*(?:{_MULTI_UNITS}|{_SINGLE_UNITS})"
+    rf"(?:\s+(?:{_MULTI_UNITS}|{_SINGLE_UNITS}))*\s*\}}{_EXP}", re.I)
 _UNITS = re.compile(
-    r"\s*(?:dollars?|cents?|units?|degrees?|cm|m|km|inches|inch|feet|foot|ft|hours?|minutes?|"
-    r"seconds?|days?|weeks?|years?|meters?|miles?|pounds?|lbs?|kg|g|square|sq)\b\.?",
-    re.I,
-)
+    rf"(?<=\d)(?:(?:\s*(?:{_MULTI_UNITS})|\s+(?:{_SINGLE_UNITS}))\b{_EXP})+\.?", re.I)
 
 
 def normalize_answer(ans: Optional[str]) -> Optional[str]:
     if ans is None:
         return None
     s = str(ans).strip()
+    s = _TEXT_UNITS.sub("", s)
     s = _TEXT_CMD.sub(r"\1", s)
     for a, b in (
         ("\\left", ""), ("\\right", ""), ("\\!", ""), ("\\,", ""), ("\\;", ""), ("\\ ", ""),
