@@ -69,6 +69,9 @@ replayed through `test.sh`):
 | 2 | 0.6053 | 0.6295 | 65.4% | 60.5% |
 | **Mean ± SD** | **0.6064 ± 0.0011** | **0.6353 ± 0.0053** | | |
 
+The RSI Bench calibration workflow independently measured validation 0.6035 ± 0.0016 and test
+0.6316 ± 0.0116 (the values recorded in `task.toml`), consistent with the local runs above.
+
 Single development runs on the hidden-test benchmarks show the headroom question is non-trivial:
 
 | Selection | MATH-500 | GSM8K-Hard (full) |
