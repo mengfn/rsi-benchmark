@@ -156,8 +156,18 @@ def _math_verify(pred: str, gold: str) -> bool:
         return False
     # math-verify's default parse/verify timeouts (signal-based; grading runs on the main thread) bound
     # pathological answers such as 9^{9^{9^{9}}}; a timeout or any error counts as incorrect.
+    # Its default unit normalization is disabled: it would read "2m" as 2, grading "2" vs "2m" correct.
+    # Units are handled by normalize_answer's exact-match path instead.
     try:
-        return bool(verify(parse(f"${gold}$"), parse(f"${pred}$")))
+        from latex2sympy2_extended import NormalizationConfig  # type: ignore
+        from math_verify import ExprExtractionConfig, LatexExtractionConfig  # type: ignore
+
+        cfg = [
+            LatexExtractionConfig(normalization_config=NormalizationConfig(
+                basic_latex=True, units=False, malformed_operators=True, nits=True, boxed="all", equations=False)),
+            ExprExtractionConfig(),
+        ]
+        return bool(verify(parse(f"${gold}$", extraction_config=cfg), parse(f"${pred}$", extraction_config=cfg)))
     except Exception:
         return False
 
@@ -173,7 +183,9 @@ def grade_answer(pred: Optional[str], gold: Optional[str], use_symbolic: bool = 
     pf, gf = to_float(p), to_float(g)
     if pf is not None and gf is not None:
         return abs(pf - gf) <= 1e-4 * max(1.0, abs(gf))
-    return use_symbolic and _math_verify(pred, gold)
+    # Raw strings first; then the normalised forms, whose units were stripped by the number-anchored
+    # _UNITS / _TEXT_UNITS rules (e.g. gold "\frac{270}7\text{ degrees}" vs "\frac{270}{7}^\circ").
+    return use_symbolic and (_math_verify(pred, gold) or (p, g) != (pred, gold) and _math_verify(p, g))
 
 
 def grade_choice(pred: Optional[str], gold: str) -> bool:

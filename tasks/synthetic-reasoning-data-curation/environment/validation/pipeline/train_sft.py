@@ -7,8 +7,9 @@
 steps); the result never depends on hardware speed. The fine-tuned model is written to `<out>/final` and a
 training summary (loss curve, runtime, steps) to `<out>/train_summary.json`.
 Compute is bounded by the submission's training-token budget (check_submission.py). SAFETY_CAP_S is only a
-guard against a hung run: if it is ever hit, no model is saved and the run exits with code 3, which the
-evaluators score as invalid rather than scoring a partly trained model.
+guard against slow or broken hardware: if it is ever hit, no model is saved and the run exits with code 3,
+which the evaluators report as an evaluator error (not scored, retryable) rather than scoring a partly
+trained model or penalising a valid submission.
 The hidden evaluator runs an identical copy of this file; editing this copy changes nothing there.
 """
 from __future__ import annotations

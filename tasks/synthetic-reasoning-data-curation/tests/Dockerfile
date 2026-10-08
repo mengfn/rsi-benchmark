@@ -26,6 +26,7 @@ RUN mkdir -p /opt/pool /tests/data \
         --out /opt/pool/candidate_100k.jsonl --tokenizer /opt/models/qwen2.5-math-1.5b \
     && HF_HOME=/tmp/hfcache python /tests/data_build/build_benchmarks.py --split test --out /tests/data \
     && rm -rf /tmp/hfcache /root/.cache \
+    && python /tests/grading_regression.py /tests/pipeline \
     && chmod +x /tests/test.sh \
     && mkdir -p /workspace /logs/verifier
 

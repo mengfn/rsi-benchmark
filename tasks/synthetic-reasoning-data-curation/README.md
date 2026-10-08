@@ -22,6 +22,9 @@ spend compute to test it, and read the results critically against noise.
   solution, the problem source (`math`, `gsm8k`, `augmented_math`, `augmented_gsm8k`), the reference
   answer, the extracted answer, a correctness label, a token count, and the number of solutions the
   problem has in the source split.
+  The `is_correct` label was computed once at pool-build time by the original grader (kept frozen in
+  `environment/data_build/common.py` so the pool's sha256 stays fixed); it can differ from the
+  evaluator's current grader on rare unit-related edge cases (e.g. `2` vs `2m`).
 - **Submission.** `/workspace/submission/selection.json` is a list of exactly 10,000 distinct pool ids.
   It comes with `curate.py`, the recipe that produced it, and `summary.md`.
 - **Frozen recipe.** Full fine-tune of Qwen2.5-Math-1.5B for 3 epochs: learning rate 1e-5 with cosine
@@ -31,8 +34,9 @@ spend compute to test it, and read the results critically against noise.
   `\boxed{}` answers graded by math-verify (default per-answer timeouts; a timeout counts as wrong).
 - **Training-token budget.** The selected responses' `num_tokens` must sum to at most 6,000,000 (the
   baseline uses about 4.0M), which bounds training compute while leaving room for longer-reasoning
-  selections. A 75-minute safety cap guards against a hung run: if it is ever hit, no model is saved and
-  the run is scored invalid rather than scoring a partly trained model. Measured worst case: a
+  selections. A 75-minute safety cap guards against slow or broken hardware: if it is ever hit, no model
+  is saved and the evaluator exits with an error (no reward, retryable) rather than scoring a partly
+  trained model or marking a valid submission invalid. Measured worst case: a
   selection built to maximise padding (5,000 longest + 5,000 shortest responses, 5.26M tokens, so 99.6%
   of batches pad to near-maximum length) trained all 471 steps in 29.3 minutes on one H100, versus
   22.6 minutes for the baseline and well inside the 75-minute cap.
@@ -69,8 +73,8 @@ replayed through `test.sh`):
 | 2 | 0.6053 | 0.6295 | 65.4% | 60.5% |
 | **Mean ± SD** | **0.6064 ± 0.0011** | **0.6353 ± 0.0053** | | |
 
-The RSI Bench calibration workflow independently measured validation 0.6035 ± 0.0016 and test
-0.6316 ± 0.0116 (the values recorded in `task.toml`), consistent with the local runs above.
+The RSI Bench calibration workflow re-measures the baseline whenever the evaluator changes; the values
+recorded in `task.toml` are its latest measurement and agree with the local runs above within noise.
 
 Single development runs on the hidden-test benchmarks show the headroom question is non-trivial:
 
@@ -88,10 +92,14 @@ Single development runs on the hidden-test benchmarks show the headroom question
    non-empty `curate.py`, a `summary.md` with the required sections, and selected responses within the
    6,000,000-token training budget. It then builds the training
    file from the evaluator's own copy of the pool, so a submission can only choose rows, never edit them.
-2. `train_sft.py` runs the frozen recipe for all 471 steps. Hitting the safety cap fails the run.
+2. `train_sft.py` runs the frozen recipe for all 471 steps.
 3. `evaluate.py` decodes greedily and writes `reward.json`.
 
-Any failure writes `invalid = 1` and reward 0.
+A contract violation writes `invalid = 1` and reward 0. A failure that is not the submission's fault
+(safety cap, training or evaluation crash, verifier asset integrity) writes no reward and exits non-zero,
+so it is reported as an evaluator error and can be retried. Grading regression cases
+(`tests/grading_regression.py`) run at verifier image build time, so the image fails to build if the
+pinned environment ever grades them differently.
 
 | | Validation (`val.sh`, agent-visible) | Hidden (`test.sh`) |
 |---|---|---|

@@ -116,7 +116,7 @@ revision = "v0.9.1"
 license = "Apache-2.0"
 
 [verifier]
-timeout_sec = 7200.0 # frozen training (<= 45 min) + evaluation, with margin
+timeout_sec = 7200.0 # training (typically 22-30 min, 75-min safety cap) + evaluation, with margin
 environment_mode = "separate"
 
 [verifier.environment]
