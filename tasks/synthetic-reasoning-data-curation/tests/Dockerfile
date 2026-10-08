@@ -21,8 +21,7 @@ local_dir='/opt/models/qwen2.5-math-1.5b', allow_patterns=['*.json', '*.safetens
     && rm -rf /root/.cache/huggingface
 
 COPY . /tests/
-RUN cp /tests/pipeline/common.py /tests/data_build/common.py \
-    && mkdir -p /opt/pool /tests/data \
+RUN mkdir -p /opt/pool /tests/data \
     && HF_HOME=/tmp/hfcache HF_HUB_ENABLE_HF_TRANSFER=1 python /tests/data_build/build_pool.py \
         --out /opt/pool/candidate_100k.jsonl --tokenizer /opt/models/qwen2.5-math-1.5b \
     && HF_HOME=/tmp/hfcache python /tests/data_build/build_benchmarks.py --split test --out /tests/data \

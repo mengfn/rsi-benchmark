@@ -38,8 +38,7 @@ COPY workspace/timer.sh /workspace/timer.sh
 # are built in the same layer from pinned sources; raw downloads (which include the hidden splits) are
 # deleted before the layer is committed.
 COPY data_build/ /tmp/build/
-RUN cp /workspace/validation/pipeline/common.py /tmp/build/common.py \
-    && mkdir -p /workspace/data /workspace/validation/data \
+RUN mkdir -p /workspace/data /workspace/validation/data \
     && HF_HOME=/tmp/hfcache HF_HUB_ENABLE_HF_TRANSFER=1 python /tmp/build/build_pool.py \
         --out /workspace/data/candidate_100k.jsonl --tokenizer /opt/models/qwen2.5-math-1.5b \
     && HF_HOME=/tmp/hfcache python /tmp/build/build_benchmarks.py --split val --out /workspace/validation/data \
