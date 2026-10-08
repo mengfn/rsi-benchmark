@@ -25,9 +25,17 @@ spend compute to test it, and read the results critically against noise.
 - **Submission.** `/workspace/submission/selection.json` is a list of exactly 10,000 distinct pool ids.
   It comes with `curate.py`, the recipe that produced it, and `summary.md`.
 - **Frozen recipe.** Full fine-tune of Qwen2.5-Math-1.5B for 3 epochs: learning rate 1e-5 with cosine
-  decay, effective batch 64, max length 2,048, loss on completions only, seed 42. Training stops at a
-  45-minute wall-clock cap; in practice it finishes in about 22 minutes on one H100. Evaluation uses
-  greedy decoding with vLLM, up to 2,048 new tokens, and `\boxed{}` answers graded by math-verify.
+  decay, effective batch 64, max length 2,048, loss on completions only, seed 42. Training always runs
+  the full 471 optimizer steps, so the score never depends on hardware speed; the baseline trains in
+  about 22 minutes on one H100. Evaluation uses greedy decoding with vLLM, up to 2,048 new tokens, and
+  `\boxed{}` answers graded by math-verify (default per-answer timeouts; a timeout counts as wrong).
+- **Training-token budget.** The selected responses' `num_tokens` must sum to at most 6,000,000 (the
+  baseline uses about 4.0M), which bounds training compute while leaving room for longer-reasoning
+  selections. A 75-minute safety cap guards against a hung run: if it is ever hit, no model is saved and
+  the run is scored invalid rather than scoring a partly trained model. Measured worst case: a
+  selection built to maximise padding (5,000 longest + 5,000 shortest responses, 5.26M tokens, so 99.6%
+  of batches pad to near-maximum length) trained all 471 steps in 29.3 minutes on one H100, versus
+  22.6 minutes for the baseline and well inside the 75-minute cap.
 - **Budget.** 12 hours on one H100. One validation run (train + evaluate) takes about 30 minutes, so the
   agent can afford roughly 15–20 experiments.
 
@@ -74,9 +82,10 @@ Single development runs on the hidden-test benchmarks show the headroom question
 `val.sh` and `test.sh` share one contract and one scoring path:
 
 1. `check_submission.py` validates the bundle: exactly 10,000 distinct ids that exist in the pool, a
-   non-empty `curate.py`, and a `summary.md` with the required sections. It then builds the training
+   non-empty `curate.py`, a `summary.md` with the required sections, and selected responses within the
+   6,000,000-token training budget. It then builds the training
    file from the evaluator's own copy of the pool, so a submission can only choose rows, never edit them.
-2. `train_sft.py` runs the frozen recipe.
+2. `train_sft.py` runs the frozen recipe for all 471 steps. Hitting the safety cap fails the run.
 3. `evaluate.py` decodes greedily and writes `reward.json`.
 
 Any failure writes `invalid = 1` and reward 0.
