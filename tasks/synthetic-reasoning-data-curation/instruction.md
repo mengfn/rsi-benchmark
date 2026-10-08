@@ -16,7 +16,7 @@ The main inputs are a candidate dataset and a small LLM.
 - **Base model:** in `/opt/models/qwen2.5-math-1.5b`, Qwen2.5-Math-1.5B. It can be used for scoring data.
 
 Other resources.
-- **Training and evaluation pipeline:** in `/workspace/validation/pipeline/`. The recipe is frozen and editing these copies has no effect on the final evaluation. There are 3 epochs, training always runs the full 471 steps, greedy decoding with up to 2,048 tokens.
+- **Training and evaluation pipeline:** in `/workspace/validation/pipeline/`. The recipe is frozen and editing these copies has no effect on the final evaluation. There are 3 epochs, training always runs the full 471 steps, greedy decoding with up to 2,048 tokens. There’s a 75-minute safety cap on training. If the cap is hit, no model is saved and the run is reported as an evaluator error and not scored.
   - `train_sft.py`, training.
   - `evaluate.py`, greedy decoding.
   - `check_submission.py`, submission checking.
