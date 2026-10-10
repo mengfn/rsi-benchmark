@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import time
 from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
@@ -107,6 +108,13 @@ _UNITS = re.compile(
     rf"(?<=\d)(?:(?:\s*(?:{_MULTI_UNITS})|\s+(?:{_SINGLE_UNITS}))\b{_EXP})+\.?", re.I)
 
 
+_THOUSANDS = re.compile(r"-?\d{1,3}(?:,\d{3})+(?:\.\d+)?")
+
+
+def _units_present(s: str) -> bool:
+    return bool(_TEXT_UNITS.search(s) or _UNITS.search(_TEXT_CMD.sub(r"\1", s)))
+
+
 def normalize_answer(ans: Optional[str]) -> Optional[str]:
     if ans is None:
         return None
@@ -121,7 +129,7 @@ def normalize_answer(ans: Optional[str]) -> Optional[str]:
         s = s.replace(a, b)
     s = _UNITS.sub("", s)
     s = s.strip().rstrip(".").strip()
-    if re.fullmatch(r"-?[\d,]+(\.\d+)?", s):
+    if _THOUSANDS.fullmatch(s):  # 1,000 -> 1000, but a list such as "-2,1" is left alone
         s = s.replace(",", "")
     s = re.sub(r"\s+", "", s)
     # \frac12 -> \frac{1}{2}
@@ -136,7 +144,7 @@ def normalize_answer(ans: Optional[str]) -> Optional[str]:
 def to_float(s: Optional[str]) -> Optional[float]:
     if s is None:
         return None
-    t = s.replace(",", "")
+    t = s.replace(",", "") if _THOUSANDS.fullmatch(s) else s
     m = re.fullmatch(r"\\frac\{(-?\d+(?:\.\d+)?)\}\{(-?\d+(?:\.\d+)?)\}", t)
     try:
         if m:
@@ -183,9 +191,18 @@ def grade_answer(pred: Optional[str], gold: Optional[str], use_symbolic: bool = 
     pf, gf = to_float(p), to_float(g)
     if pf is not None and gf is not None:
         return abs(pf - gf) <= 1e-4 * max(1.0, abs(gf))
-    # Raw strings first; then the normalised forms, whose units were stripped by the number-anchored
-    # _UNITS / _TEXT_UNITS rules (e.g. gold "\frac{270}7\text{ degrees}" vs "\frac{270}{7}^\circ").
-    return use_symbolic and (_math_verify(pred, gold) or (p, g) != (pred, gold) and _math_verify(p, g))
+    if not use_symbolic:
+        return False
+    t0 = time.time()
+    if _math_verify(pred, gold):
+        return True
+    # Second attempt on the normalised forms only when the number-anchored unit rules actually removed
+    # units (e.g. gold "\frac{270}7\text{ degrees}" vs "\frac{270}{7}^\circ"); otherwise normalisation would
+    # turn \text{...} words into bare letters ("east" == "seat" as products of symbols). Skipped after a
+    # slow first attempt so a pathological answer costs one timeout, not two.
+    if time.time() - t0 < 3.0 and (_units_present(pred) or _units_present(gold)):
+        return _math_verify(p, g)
+    return False
 
 
 def grade_choice(pred: Optional[str], gold: str) -> bool:
