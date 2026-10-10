@@ -24,8 +24,8 @@ direction = "higher_better"
 theoretical_best = 1.0
 # Baseline = uniform random selection. Measured through the task harness (seeds 0, 1, 2; the same
 # selections baseline.sh produces): validation 0.4442 / 0.4151 / 0.4169, test 0.4430 / 0.4498 / 0.4370. CI recalibrates during review.
-baseline_validation = { mean = 0.425434635794, std = 0.0163031536086, runs = 3 }
-baseline_test = { mean = 0.443278131635, std = 0.00638352685603, runs = 3 }
+baseline_validation = { mean = 0.429960443801, std = 0.0162673937368, runs = 3 }
+baseline_test = { mean = 0.439297239915, std = 0.00463675602153, runs = 3 }
 
 [[metadata.metrics]]
 name = "math_pass1"
