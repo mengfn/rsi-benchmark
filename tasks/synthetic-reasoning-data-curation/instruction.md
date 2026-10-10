@@ -10,9 +10,10 @@ You are building a system that can select a subset of candidate data to improve 
 ## Inputs
 The main inputs are a candidate dataset and a small LLM.
 - **Candidate dataset:** in `/workspace/data/candidate_100k.jsonl`, read-only, one JSON object per line.
-  - Fields: `id` (e.g. `"cand-000123"`), `problem_id`, `problem`, `response`, `source` (`math` /
-    `gsm8k` / `augmented_math` / `augmented_gsm8k`), `gt_answer`, `pred_answer`, `is_correct`,
-    `num_tokens` (Qwen2.5 tokenizer), `n_solutions_in_source`, `pass_rate_hint`, `generator`. Others `level`, `subject`, `temperature` and `finish_reason` are always null.
+  - Fields: `id` (e.g. `"cand-000123"`), `problem_id`, `problem`, `response`, `source`
+    (`math` / `gsm8k`), `num_tokens` (Qwen2.5 tokenizer).
+  - There are 100,000 text solutions to 9,582 GSM8K/MATH training problems (75% MATH), about 10 per problem, written by Mixtral-8x7B.
+  - **Mixed quality:** some solutions reach the correct final answer and some do not. There are no correctness labels.
 - **Base model:** in `/opt/models/qwen2.5-math-1.5b`, Qwen2.5-Math-1.5B. It can be used for scoring data.
 
 Other resources.
@@ -45,7 +46,7 @@ In `/workspace/validation/`.
 
 ## Baseline
 In `/workspace/baseline/`.
-- Baseline: `/workspace/baseline/baseline.sh`, it is a length + perplexity heuristic. It writes a complete submission.
+- Baseline: `/workspace/baseline/baseline.sh`, it is a uniform random selection of 10,000 ids with `$SEED` (no curation).
 - Statistics: `/workspace/baseline/baseline_val_reward.json`, it is the baseline's validation statistics, which are validation reward, mean ± SD over 3 seeds.
 - **Noise:** The reward varies by roughly ±1.4 points just from which problems are included. Retraining on the same selection varies much less. The reward is reported on a 0–1 scale. Gains of about 0.02 (2 points) or less should be treated as unconfirmed until repeated, or until a per-problem comparison of `/workspace/val_runs/<timestamp>/eval/` supports them.
 
